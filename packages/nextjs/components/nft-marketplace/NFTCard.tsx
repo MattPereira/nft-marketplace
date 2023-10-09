@@ -3,8 +3,8 @@ import Image from "next/image";
 import { formatEther } from "viem";
 import { useAccount, useContractRead } from "wagmi";
 import { erc721ABI } from "wagmi";
-import { UpdateListingModal } from "~~/components/UpdateListingModal";
 import { Spinner } from "~~/components/assets/Spinner";
+import { UpdateListingModal } from "~~/components/nft-marketplace/UpdateListingModal";
 import { Address } from "~~/components/scaffold-eth";
 import { useScaffoldContractWrite } from "~~/hooks/scaffold-eth";
 

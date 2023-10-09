@@ -1,8 +1,8 @@
 import type { NextPage } from "next";
 import { MetaHeader } from "~~/components/MetaHeader";
 import { Spinner } from "~~/components/assets/Spinner";
+import { NFTCard } from "~~/components/nft-marketplace/NFTCard";
 import { useScaffoldEventHistory } from "~~/hooks/scaffold-eth";
-import { NFTCard } from "~~/pages/NFTCard";
 
 const Home: NextPage = () => {
   const { data: itemListedEvents, isLoading: isItemListedEventsLoading } = useScaffoldEventHistory({
