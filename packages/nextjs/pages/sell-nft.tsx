@@ -1,68 +1,50 @@
 import { useState } from "react";
 import type { NextPage } from "next";
 import { parseEther } from "viem";
-import { createPublicClient, http } from "viem";
-import { sepolia } from "viem/chains";
 import { useContractWrite } from "wagmi";
-// import { useWaitForTransaction } from "wagmi";
 import { erc721ABI } from "wagmi";
+import { usePublicClient } from "wagmi";
 import { AddressInput } from "~~/components/scaffold-eth/Input";
 import { InputBase } from "~~/components/scaffold-eth/Input";
 import { useScaffoldContractWrite } from "~~/hooks/scaffold-eth";
 import { useDeployedContractInfo } from "~~/hooks/scaffold-eth";
-import { notification } from "~~/utils/scaffold-eth";
 
-const publicClient = createPublicClient({
-  chain: sepolia,
-  transport: http(),
-});
+// import { notification } from "~~/utils/scaffold-eth";
 
+/**
+ *
+ * @dev usePublicCLient() is like ethersjs Provider!
+ *
+ * can I leverage scaffold-eth "useTransactor" hook to show notification while approve tx is pending?
+ *
+ */
 const SellNFT: NextPage = () => {
   const [address, setAddress] = useState("");
   const [tokenId, setTokenId] = useState("");
   const [price, setPrice] = useState("");
 
+  const publicClient = usePublicClient();
+
   const { data: NftMarketplace } = useDeployedContractInfo("NftMarketplace");
 
-  const { write: approve } = useContractWrite({
+  const approveTx = useContractWrite({
     address: address,
     abi: erc721ABI,
     functionName: "approve",
     args: [NftMarketplace?.address as string, BigInt(tokenId)],
-    onError(error) {
-      console.log("error", error);
-    },
-    onSuccess(data) {
-      waitForTxReceipt(data);
-    },
   });
 
-  async function waitForTxReceipt(data: any) {
-    const txReceipt = await publicClient.waitForTransactionReceipt(data);
-    console.log("txReceipt", txReceipt);
-    if (txReceipt.status === "success") {
-      notification.success("NFT marketplace approved to sell your NFT");
-      listItem();
-    } else {
-      notification.error("Transaction failed");
-    }
-  }
-
-  const { writeAsync: listItem } = useScaffoldContractWrite({
+  const listNftTx = useScaffoldContractWrite({
     contractName: "NftMarketplace",
     functionName: "listItem",
     args: [address, BigInt(tokenId), parseEther(price)],
-    // The number of block confirmations to wait for before considering transaction to be confirmed (default : 1).
-    blockConfirmations: 1,
-    // The callback function to execute when the transaction is confirmed.
-    onBlockConfirmation: txnReceipt => {
-      console.log("Transaction blockHash", txnReceipt.blockHash);
-    },
   });
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    approve();
+    const approveHash = await approveTx?.writeAsync();
+    await publicClient.waitForTransactionReceipt(approveHash);
+    await listNftTx?.writeAsync();
   };
 
   return (
